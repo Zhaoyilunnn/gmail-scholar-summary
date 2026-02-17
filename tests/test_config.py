@@ -14,10 +14,11 @@ class TestGmailConfig:
     def test_default_values(self):
         """测试默认值."""
         config = GmailConfig()
-        assert config.label == "Scholar Alerts"
+        assert config.label == "scholar"
         assert config.unread_only is True
         assert config.mark_as_read is True
         assert config.max_emails == 50
+        assert config.days_back == 7
 
     def test_custom_values(self):
         """测试自定义值."""
@@ -26,11 +27,13 @@ class TestGmailConfig:
             unread_only=False,
             mark_as_read=False,
             max_emails=100,
+            days_back=14,
         )
         assert config.label == "Custom Label"
         assert config.unread_only is False
         assert config.mark_as_read is False
         assert config.max_emails == 100
+        assert config.days_back == 14
 
 
 class TestFetcherConfig:
@@ -120,7 +123,7 @@ report:
         try:
             config = Config.from_yaml(temp_path)
             # 应该使用默认值
-            assert config.gmail.label == "Scholar Alerts"
+            assert config.gmail.label == "scholar"
             assert config.fetcher.type == "simple_html"
         finally:
             os.unlink(temp_path)
@@ -163,6 +166,6 @@ class TestConfigFromEnv:
             monkeypatch.delenv(key, raising=False)
 
         config = Config.from_env()
-        assert config.gmail.label == "Scholar Alerts"
+        assert config.gmail.label == "scholar"
         assert config.fetcher.type == "simple_html"
         assert config.llm.provider == "openai"

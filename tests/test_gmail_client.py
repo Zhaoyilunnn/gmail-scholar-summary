@@ -112,6 +112,45 @@ class TestGetUnreadEmails:
         with pytest.raises(GmailClientError):
             mock_client.get_unread_scholar_emails("Scholar Alerts")
 
+    def test_get_unread_scholar_emails_with_days_back(self, mock_client):
+        """测试使用 days_back 参数筛选邮件."""
+        mock_client.service.users().messages().list().execute.return_value = {
+            "messages": [{"id": "msg1"}]
+        }
+
+        mock_client.service.users().messages().get().execute.return_value = {
+            "id": "msg1",
+            "payload": {
+                "headers": [
+                    {"name": "Subject", "value": "Test Subject"},
+                    {"name": "From", "value": "scholar@google.com"},
+                ],
+                "body": {"data": base64.urlsafe_b64encode(b"Test body").decode()},
+            },
+            "snippet": "Snippet",
+            "internalDate": "1234567890",
+        }
+
+        # 测试 days_back=7
+        emails = mock_client.get_unread_scholar_emails(label="scholar", days_back=7)
+
+        assert len(emails) == 1
+        # 验证查询中包含 after: 日期
+        call_args = mock_client.service.users().messages().list.call_args
+        assert "after:" in call_args[1]["q"]
+
+    def test_get_unread_scholar_emails_default_days_back(self, mock_client):
+        """测试默认使用 scholar 标签."""
+        mock_client.service.users().messages().list().execute.return_value = {
+            "messages": []
+        }
+
+        mock_client.get_unread_scholar_emails()
+
+        # 验证默认使用 scholar 标签
+        call_args = mock_client.service.users().messages().list.call_args
+        assert "label:scholar" in call_args[1]["q"]
+
 
 class TestExtractLinks:
     """测试链接提取功能."""

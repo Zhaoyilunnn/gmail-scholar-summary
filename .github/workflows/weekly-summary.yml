@@ -3,39 +3,39 @@ name: Weekly Scholar Summary
 on:
   schedule:
     # 每周一上午 9:00 运行 (UTC 时间周一凌晨 1:00)
-    - cron: '0 1 * * 1'
+    - cron: "0 1 * * 1"
   workflow_dispatch:
     inputs:
       debug:
-        description: '启用调试模式'
+        description: "启用调试模式"
         required: false
-        default: 'false'
+        default: "false"
       dry_run:
-        description: '试运行模式（不发送邮件）'
+        description: "试运行模式（不发送邮件）"
         required: false
-        default: 'false'
+        default: "false"
 
 jobs:
   summarize:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      
+          python-version: "3.11"
+
       - name: Install uv
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-      
+
       - name: Install dependencies
         run: uv sync
-      
+
       - name: Decode credentials
         env:
           GMAIL_CREDENTIALS: ${{ secrets.GMAIL_CREDENTIALS }}
@@ -47,7 +47,7 @@ jobs:
           if [ -n "$GMAIL_TOKEN" ]; then
             echo "$GMAIL_TOKEN" | base64 -d > token.json
           fi
-      
+
       - name: Run summarizer
         env:
           # Gmail 配置
@@ -55,15 +55,15 @@ jobs:
           GMAIL_TOKEN: ${{ secrets.GMAIL_TOKEN }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
           GMAIL_LABEL: ${{ secrets.GMAIL_LABEL }}
-          
+
           # LLM 配置（必需）
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
           OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
-          
+
           # LLM 配置（可选，预留）
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          
+
           # 调试
           DEBUG: ${{ github.event.inputs.debug == 'true' && '1' || '0' }}
         run: |
@@ -74,8 +74,8 @@ jobs:
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             ARGS="$ARGS --dry-run"
           fi
-          uv run python src/main.py $ARGS
-      
+          uv run python main.py $ARGS
+
       - name: Upload report artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -86,7 +86,7 @@ jobs:
             *.md
             *.html
           if-no-files-found: ignore
-      
+
       - name: Send notification on failure
         if: failure()
         uses: actions/github-script@v7

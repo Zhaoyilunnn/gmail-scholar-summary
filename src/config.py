@@ -14,10 +14,11 @@ import yaml
 class GmailConfig:
     """Gmail 配置."""
 
-    label: str = "Scholar Alerts"
+    label: str = "scholar"
     unread_only: bool = True
     mark_as_read: bool = True
     max_emails: int = 50
+    days_back: int = 7  # 处理最近几天的邮件
 
 
 @dataclass
@@ -99,6 +100,9 @@ class Config:
         gmail_max_emails = os.getenv("GMAIL_MAX_EMAILS")
         if gmail_max_emails:
             config.gmail.max_emails = int(gmail_max_emails)
+        gmail_days_back = os.getenv("GMAIL_DAYS_BACK")
+        if gmail_days_back:
+            config.gmail.days_back = int(gmail_days_back)
 
         # Fetcher 配置
         fetcher_type = os.getenv("FETCHER_TYPE")
@@ -135,10 +139,11 @@ class Config:
 
         return cls(
             gmail=GmailConfig(
-                label=gmail_data.get("label", "Scholar Alerts"),
+                label=gmail_data.get("label", "scholar"),
                 unread_only=gmail_data.get("unread_only", True),
                 mark_as_read=gmail_data.get("mark_as_read", True),
                 max_emails=gmail_data.get("max_emails", 50),
+                days_back=gmail_data.get("days_back", 7),
             ),
             fetcher=FetcherConfig(
                 type=fetcher_data.get("type", "simple_html"),

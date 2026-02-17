@@ -60,16 +60,66 @@ uv run python src/main.py
 
 ### 2. 生成 Gmail 凭证
 
+#### 步骤 1: 创建 Google Cloud 项目
+
+1. 访问 [Google Cloud Console](https://console.cloud.google.com/)
+2. 点击顶部项目下拉菜单 → **新建项目**
+3. 输入项目名称（如 `gmail-scholar-summary`）→ **创建**
+
+#### 步骤 2: 启用 Gmail API
+
+1. 在新项目中，点击左上角菜单 → **API 和服务** → **库**
+2. 搜索 **Gmail API** → 点击进入 → **启用**
+
+#### 步骤 3: 配置 OAuth 同意屏幕
+
+1. 左侧菜单 → **API 和服务** → **OAuth 同意屏幕**
+2. 选择 **外部**（适用于任何 Google 账号）→ **创建**
+3. 填写应用信息：
+   - **应用名称**: Gmail Scholar Summary
+   - **用户支持邮箱**: 你的邮箱
+   - **开发者联系邮箱**: 你的邮箱
+4. 点击 **保存并继续** → **保存并继续**（无需添加测试用户）
+5. 点击 **返回信息中心**
+
+#### 步骤 4: 创建 OAuth2 凭证
+
+1. 左侧菜单 → **凭据** → **创建凭据** → **OAuth 客户端 ID**
+2. **应用类型**: 选择 **桌面应用**
+3. **名称**: Gmail Scholar Summary Client
+4. 点击 **创建**
+5. 弹出窗口显示 **客户端 ID** 和 **客户端密钥** → 点击 **下载 JSON**
+6. 将下载的文件重命名为 `credentials.json`
+
+#### 步骤 5: 生成本地授权 Token
+
 ```bash
-# 1. 从 Google Cloud Console 下载 credentials.json
+# 将 credentials.json 放到项目根目录
+mv ~/Downloads/client_secret_*.json credentials.json
 
-# 2. 本地运行获取 token
-uv run python -c "from src.gmail_client import GmailClient; GmailClient()"
+# 运行授权脚本
+uv run python -c "from src.gmail_client import GmailClient; c = GmailClient()"
 
-# 3. 编码为 base64
+# 这会打开浏览器让你授权，授权后会生成 token.json
+```
+
+#### 步骤 6: 编码为 base64 添加到 GitHub Secrets
+
+```bash
+# macOS/Linux
+cat credentials.json | base64 | pbcopy  # 复制到剪贴板
+cat token.json | base64 | pbcopy        # 复制到剪贴板
+
+# 或在终端直接显示（然后复制）
 cat credentials.json | base64
 cat token.json | base64
 ```
+
+将这两个 base64 字符串分别添加到 GitHub Secrets:
+- `GMAIL_CREDENTIALS`: credentials.json 的 base64
+- `GMAIL_TOKEN`: token.json 的 base64
+
+**注意**: token.json 包含 refresh token，有效期较长。如果授权过期，需要重新生成本地 token 并更新 Secret。
 
 ### 3. 手动触发
 
@@ -151,4 +201,4 @@ gmail-scholar-summary/
 
 ## License
 
-MIT License
+Apache License 2.0

@@ -1,26 +1,27 @@
 # Gmail 配置
 gmail:
-  label: "Scholar Alerts"           # 监控的标签
-  unread_only: true                 # 只处理未读邮件
-  mark_as_read: true               # 处理后标记为已读
-  max_emails: 50                   # 每次最多处理邮件数
+  label: "scholar" # 监控的标签（小写格式）
+  unread_only: true # 只处理未读邮件
+  mark_as_read: true # 处理后标记为已读
+  max_emails: 50 # 每次最多处理邮件数
+  days_back: 7 # 处理最近几天的邮件（默认最近一周）
 
 # Fetcher 配置
 fetcher:
-  type: "simple_html"              # simple_html / docling
-  timeout_sec: 30                  # 请求超时时间，单位秒
-  retry_times: 3                   # 重试次数
+  type: "simple_html" # simple_html / docling
+  timeout_sec: 30 # 请求超时时间，单位秒
+  retry_times: 3 # 重试次数
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 
 # LLM 配置
 llm:
-  provider: "openai"               # openai / gemini
-  temperature: 0.3                # 温度参数
-  max_tokens: 1000                # 最大 token 数
+  provider: "openai" # openai / gemini
+  temperature: 0.3 # 温度参数
+  max_tokens: 10000 # 最大 token 数
 
 # 报告配置
 report:
-  format: "markdown"              # markdown / html
+  format: "markdown" # markdown / html
   subject_template: "学术周报 - {date}"
-  include_metadata: true          # 包含论文元数据
-  min_relevance_score: 6.0        # 最低相关度阈值
+  include_metadata: true # 包含论文元数据
+  min_relevance_score: 6.0 # 最低相关度阈值

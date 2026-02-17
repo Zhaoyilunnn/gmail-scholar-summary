@@ -7,6 +7,7 @@ import base64
 import logging
 import os
 import re
+from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Any, Dict, List, Optional
@@ -33,6 +34,10 @@ class GmailClient:
     Attributes:
         service: Gmail API 服务对象.
         user_id: 用户 ID，默认为 'me'.
+
+    Note:
+        代理设置: 本客户端会自动读取 http_proxy/https_proxy 环境变量.
+        在 .env 文件中配置: http_proxy=http://127.0.0.1:7890
     """
 
     SCOPES = [
@@ -95,18 +100,28 @@ class GmailClient:
                 token.write(creds.to_json())
 
         try:
-            return build("gmail", "v1", credentials=creds)
+            # httplib2 会自动读取 http_proxy/https_proxy 环境变量
+            # 无需显式配置代理
+            logger.info("正在连接 Gmail API...")
+            service = build("gmail", "v1", credentials=creds)
+            logger.info("✅ 成功创建 Gmail 服务")
+            return service
         except Exception as e:
+            logger.error(f"❌ 连接 Gmail API 失败: {e}")
             raise GmailClientError(f"创建 Gmail 服务失败: {e}")
 
     def get_unread_scholar_emails(
-        self, label: str = "Scholar Alerts", max_results: int = 50
+        self,
+        label: str = "scholar",
+        max_results: int = 50,
+        days_back: int = 7,
     ) -> List[Dict]:
-        """获取指定标签下的未读邮件.
+        """获取指定标签下最近一段时间的未读邮件.
 
         Args:
             label: 标签名称.
             max_results: 最大返回邮件数.
+            days_back: 处理最近几天的邮件（默认最近一周）.
 
         Returns:
             邮件列表，每个邮件包含 id, subject, snippet, links 等.
@@ -115,8 +130,20 @@ class GmailClient:
             GmailClientError: API 调用失败.
         """
         try:
-            # 搜索未读邮件
-            query = f"label:{label} is:unread"
+            # 构建搜索查询
+            # 计算日期范围
+            if days_back > 0:
+                # Gmail 查询语法: after:YYYY/MM/DD
+                # 使用内部日期（邮件接收时间）
+                date_since = (datetime.now() - timedelta(days=days_back)).strftime(
+                    "%Y/%m/%d"
+                )
+                query = f"label:{label} is:unread after:{date_since}"
+            else:
+                query = f"label:{label} is:unread"
+
+            logger.debug(f"搜索查询: {query}")
+
             results = (
                 self.service.users()
                 .messages()
@@ -132,7 +159,9 @@ class GmailClient:
                 if email:
                     emails.append(email)
 
-            logger.info(f"获取到 {len(emails)} 封未读邮件")
+            logger.info(
+                f"获取到 {len(emails)} 封未读邮件（标签: {label}, 最近 {days_back} 天）"
+            )
             return emails
 
         except HttpError as e:
