@@ -12,6 +12,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from .base import PaperFetchError, PaperFetcher, PaperInfo
+from .url_processors import URLProcessorChain, default_processor_chain
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ class SimpleHTMLFetcher(PaperFetcher):
         timeout_sec: float = 30.0,
         retry_times: int = 3,
         user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        url_processor: Optional[URLProcessorChain] = None,
     ):
         """初始化 Fetcher.
 
@@ -34,12 +36,14 @@ class SimpleHTMLFetcher(PaperFetcher):
             timeout_sec: 请求超时时间，单位秒.
             retry_times: 重试次数.
             user_agent: User-Agent 字符串.
+            url_processor: URL 处理器链，默认使用内置处理器.
         """
         self.timeout_sec = timeout_sec
         self.retry_times = retry_times
         self.user_agent = user_agent
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": user_agent})
+        self.url_processor = url_processor or default_processor_chain
 
     def can_fetch(self, url: str) -> bool:
         """检查是否可以处理该 URL.
@@ -67,25 +71,32 @@ class SimpleHTMLFetcher(PaperFetcher):
         if not self.can_fetch(url):
             raise PaperFetchError(f"不支持的 URL: {url}")
 
-        logger.debug(f"开始获取论文信息: {url}")
+        # 使用处理器链清理和转换 URL
+        processed_url = self.url_processor.process(url)
+        if processed_url != url:
+            logger.info(f"URL 已转换: {url[:60]}... -> {processed_url[:60]}...")
+
+        logger.debug(f"开始获取论文信息: {processed_url}")
 
         # 重试机制
         last_error = None
         for attempt in range(self.retry_times):
             try:
-                response = self.session.get(url, timeout=self.timeout_sec)
+                response = self.session.get(processed_url, timeout=self.timeout_sec)
                 response.raise_for_status()
-                return self._parse_html(response.text, url)
+                return self._parse_html(response.text, processed_url)
             except requests.Timeout:
                 last_error = f"请求超时 (尝试 {attempt + 1}/{self.retry_times})"
-                logger.warning(f"{last_error}: {url}")
+                logger.warning(f"{last_error}: {processed_url}")
                 time.sleep(1 * (attempt + 1))  # 指数退避
             except requests.RequestException as e:
                 last_error = f"请求失败: {e}"
-                logger.error(f"{last_error}: {url}")
-                raise PaperFetchError(f"获取论文失败: {url} - {last_error}")
+                logger.error(f"{last_error}: {processed_url}")
+                raise PaperFetchError(f"获取论文失败: {processed_url} - {last_error}")
 
-        raise PaperFetchError(f"获取论文失败，已重试 {self.retry_times} 次: {url}")
+        raise PaperFetchError(
+            f"获取论文失败，已重试 {self.retry_times} 次: {processed_url}"
+        )
 
     def _parse_html(self, html: str, url: str) -> PaperInfo:
         """解析 HTML 提取论文信息.
