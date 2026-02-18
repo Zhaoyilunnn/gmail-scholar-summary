@@ -161,17 +161,29 @@ class TestExtractLinks:
         client = GmailClient.__new__(GmailClient)
         return client
 
-    def test_extract_scholar_links(self, mock_client):
-        """测试提取 Google Scholar 链接."""
+    def test_extract_scholar_url_links(self, mock_client):
+        """测试提取 Google Scholar scholar_url 链接."""
         text = """
-        Check out this paper: https://scholar.google.com/scholar?cluster=123
-        Another one: https://scholar.google.com/scholar?cluster=456
+        Check out this paper: https://scholar.google.com/scholar_url?url=https://arxiv.org/pdf/2401.12345
+        Another one: https://scholar.google.com/scholar_url?url=https://arxiv.org/abs/2402.56789
         """
 
         links = mock_client._extract_links(text)
 
         assert len(links) == 2
         assert "scholar.google.com" in links[0]
+
+    def test_filter_scholar_search_links(self, mock_client):
+        """测试过滤 Google Scholar 搜索页面链接."""
+        text = """
+        Check out this paper: https://scholar.google.com/scholar?cluster=123
+        Another one: https://scholar.google.com/scholar?cluster=456
+        """
+
+        # 搜索页面应该被过滤掉
+        links = mock_client._extract_links(text)
+
+        assert len(links) == 0
 
     def test_extract_arxiv_links(self, mock_client):
         """测试提取 arXiv 链接."""

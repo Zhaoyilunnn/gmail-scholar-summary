@@ -17,6 +17,8 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from src.link_filters import extract_paper_links
+
 logger = logging.getLogger(__name__)
 
 
@@ -245,28 +247,15 @@ class GmailClient:
         return body
 
     def _extract_links(self, text: str) -> List[str]:
-        """从文本中提取 URL 链接.
+        """从文本中提取论文 URL 链接.
 
         Args:
             text: 文本内容.
 
         Returns:
-            URL 列表.
+            论文 URL 列表.
         """
-        # 匹配 URL 的正则表达式
-        url_pattern = r"https?://[^\s<>\"{}|\\^`\[\]]+"
-        urls = re.findall(url_pattern, text)
-
-        # 过滤和清理
-        cleaned_urls = []
-        for url in urls:
-            # 去除末尾的标点
-            url = url.rstrip(".,;:!?)")
-            # 只保留 scholar.google.com 和 arxiv.org 的链接
-            if "scholar.google.com" in url or "arxiv.org" in url:
-                cleaned_urls.append(url)
-
-        return cleaned_urls
+        return extract_paper_links(text)
 
     def send_email(self, to: str, subject: str, body: str, html: bool = True) -> str:
         """发送邮件.
