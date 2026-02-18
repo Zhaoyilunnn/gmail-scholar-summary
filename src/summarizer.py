@@ -6,10 +6,9 @@
 import logging
 from typing import Dict, List, Optional
 
-from src.config import LLMConfig
-from src.fetchers import PaperFetchError, PaperFetcher, PaperInfo
+from src.fetchers import PaperFetchError, PaperFetcher
 from src.fetchers.simple_html_fetcher import SimpleHTMLFetcher
-from src.llm_providers import LLMError, LLMProvider, SummaryResult
+from src.llm_providers import LLMError, LLMProvider
 from src.llm_providers.openai_provider import OpenAIProvider
 
 logger = logging.getLogger(__name__)

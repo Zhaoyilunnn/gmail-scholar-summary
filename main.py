@@ -8,19 +8,20 @@ import base64
 import logging
 import os
 import sys
-from typing import List, Optional
+from typing import List
 
-# 加载 .env 文件环境变量（必须在其他导入之前）
+# 加载 .env 文件环境变量
 from dotenv import load_dotenv
-
-load_dotenv()
-
-from src.config import Config, GmailConfig
+from src.config import Config
 from src.fetchers.simple_html_fetcher import SimpleHTMLFetcher
 from src.gmail_client import GmailClient, GmailClientError
 from src.llm_providers.openai_provider import OpenAIProvider
 from src.report_generator import ReportGenerator
 from src.summarizer import PaperSummarizer, SummarizerError
+
+
+load_dotenv()
+
 
 # 配置日志
 logging.basicConfig(

@@ -1,6 +1,6 @@
 # Gmail 学术新论文自动摘要与周报报告工具 - 开发计划
 
-**部署方式**: GitHub Actions  
+**部署方式**: GitHub Actions
 **技术栈**: Python 3.11+ + Gmail API + OpenAI API
 
 ---
@@ -103,11 +103,11 @@ from typing import Dict
 
 class PaperFetcher(ABC):
     """论文信息获取器抽象基类."""
-    
+
     @abstractmethod
     def fetch(self, url: str) -> Dict:
         """从 URL 获取论文信息.
-        
+
         Returns:
             {
                 'title': str,
@@ -124,17 +124,17 @@ class PaperFetcher(ABC):
 ```python
 class SimpleHTMLFetcher(PaperFetcher):
     """基于 BeautifulSoup 的简单 HTML 解析器."""
-    
+
     def __init__(self, timeout_sec: float = 30.0):
         self.timeout_sec = timeout_sec
         self.session = requests.Session()
-    
+
     def fetch(self, url: str) -> Dict:
         """获取论文信息."""
         response = self.session.get(url, timeout=self.timeout_sec)
         response.raise_for_status()
         return self._parse_html(response.text, url)
-    
+
     def _parse_html(self, html: str, url: str) -> Dict:
         """解析 HTML 提取论文信息."""
         # 使用 BeautifulSoup 解析
@@ -147,11 +147,11 @@ class SimpleHTMLFetcher(PaperFetcher):
 ```python
 class DoclingFetcher(PaperFetcher):
     """基于 Docling 的高级文档解析器.
-    
+
     安装: pip install docling
     优势: 更好的 PDF 和复杂页面解析能力
     """
-    
+
     def __init__(self):
         # 预留 docling 集成接口
         pass
@@ -200,11 +200,11 @@ from typing import Dict
 
 class LLMProvider(ABC):
     """LLM Provider 抽象基类."""
-    
+
     @abstractmethod
     def summarize(self, title: str, abstract: str) -> Dict:
         """生成论文中文摘要.
-        
+
         Returns:
             {
                 'summary': str,           # 一句话总结
@@ -225,24 +225,24 @@ from openai import OpenAI
 
 class OpenAIProvider(LLMProvider):
     """OpenAI 兼容接口 Provider.
-    
+
     支持标准 OpenAI API 和兼容接口（如 OpenRouter、中转站等）
     """
-    
+
     def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY")
         self.base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
         self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-        
+
         self.client = OpenAI(
             api_key=self.api_key,
             base_url=self.base_url
         )
-    
+
     def summarize(self, title: str, abstract: str) -> Dict:
         """生成论文摘要."""
         prompt = self._build_prompt(title, abstract)
-        
+
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
@@ -252,7 +252,7 @@ class OpenAIProvider(LLMProvider):
             temperature=0.3,
             max_tokens=1000
         )
-        
+
         return self._parse_response(response)
 ```
 
@@ -261,10 +261,10 @@ class OpenAIProvider(LLMProvider):
 ```python
 class GeminiProvider(LLMProvider):
     """Google Gemini Provider.
-    
+
     使用 GEMINI_API_KEY 环境变量
     """
-    
+
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY")
         # 预留 Gemini 集成
@@ -360,18 +360,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - run: pip install -r requirements.txt
-      
+
       - name: Decode credentials
         run: |
           echo "${{ secrets.GMAIL_CREDENTIALS }}" | base64 -d > credentials.json
           echo "${{ secrets.GMAIL_TOKEN }}" | base64 -d > token.json
-      
+
       - name: Run summarizer
         env:
           # Gmail 配置

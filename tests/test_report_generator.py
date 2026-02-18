@@ -1,8 +1,5 @@
 """Report Generator 模块测试."""
 
-import re
-from datetime import datetime
-
 import pytest
 
 from src.config import ReportConfig

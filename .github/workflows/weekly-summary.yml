@@ -97,9 +97,9 @@ jobs:
               repo: context.repo.repo,
               title: '🚨 Weekly Scholar Summary Failed',
               body: `Workflow failed on ${new Date().toISOString()}
-              
+
               Run ID: ${context.runId}
-              
+
               Please check the logs for details.`
             });
             console.log('Created issue:', issue.number);

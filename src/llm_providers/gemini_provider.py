@@ -7,7 +7,7 @@
 
 import logging
 import os
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from .base import LLMError, LLMProvider, SummaryResult
 

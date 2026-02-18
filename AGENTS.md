@@ -14,52 +14,50 @@
 
 ## 构建 / Lint / Test 命令
 
-### Python 环境
+### Python 环境 (使用 uv)
 
 ```bash
-# 安装依赖
-pip install -r requirements.txt
-pip install -r requirements-dev.txt  # 包含 pytest, ruff, mypy
+# 同步 pyproject.toml 依赖
+uv sync
 
 # 运行所有测试
-pytest
+uv run pytest
 
 # 运行单个测试文件
-pytest tests/test_gmail_client.py
+uv run pytest tests/test_gmail_client.py
 
 # 运行单个测试函数
-pytest tests/test_gmail_client.py -k "test_get_unread_emails"
+uv run pytest tests/test_gmail_client.py -k "test_get_unread_emails"
 
 # 运行并显示详细输出
-pytest -v
+uv run pytest -v
 
 # 运行并生成覆盖率报告
-pytest --cov=src --cov-report=html
+uv run pytest --cov=src --cov-report=html
 ```
 
 ### 代码检查与格式化
 
 ```bash
-# Lint 检查 (ruff 替代 flake8)
-ruff check src/ tests/
-ruff check --fix src/ tests/  # 自动修复
+# Lint 检查
+uv run ruff check src/ tests/
+uv run ruff check --fix src/ tests/  # 自动修复
 
-# 代码格式化 (遵循 Google Python Style)
-ruff format src/ tests/
-black src/ tests/  # 备选
+# 代码格式化
+uv run ruff format src/ tests/
 
 # 类型检查
-mypy src/
+uv run mypy src/
 ```
 
 ### 本地运行
 
 ```bash
 # 设置环境变量后运行
-python src/main.py
+uv run python main.py
 
 # 带调试日志
-DEBUG=1 python src/main.py
+DEBUG=1 uv run python main.py
 ```
 
 ---
@@ -71,6 +69,7 @@ DEBUG=1 python src/main.py
 - 所有 import 置于文件顶部，按顺序：标准库 → 第三方库 → 本地模块。
 - 使用绝对路径导入，禁止深层相对路径如 `../../../utils`。
 - 避免循环依赖；公共类型抽出到独立模块。
+- **可选导入**使用 `importlib.util.find_spec` 检测可用性，配合 `# noqa: F401` 注释。
 
 ```python
 import json
@@ -82,6 +81,22 @@ from openai import OpenAI
 
 from src.config import Config
 from src.gmail_client import GmailClient
+```
+
+#### 可选导入规范
+
+对于可选依赖，使用 `importlib.util.find_spec` 检查模块是否存在：
+
+```python
+import importlib.util
+
+__all__ = ["BaseClass", "DefaultImpl"]
+
+# 可选导入，仅当依赖存在时才加载
+if importlib.util.find_spec("optional_package") is not None:
+    from .optional_module import OptionalClass  # noqa: F401
+
+    __all__.append("OptionalClass")
 ```
 
 ### 格式化规范
