@@ -14,6 +14,7 @@ from typing import List
 from dotenv import load_dotenv
 from src.config import Config
 from src.fetchers.simple_html_fetcher import SimpleHTMLFetcher
+from src.fetchers.url_processors import process_paper_url
 from src.gmail_client import GmailClient, GmailClientError
 from src.llm_providers.openai_provider import OpenAIProvider
 from src.report_generator import ReportGenerator
@@ -120,20 +121,25 @@ def decode_credentials() -> None:
 def get_unique_links(emails: List[dict]) -> List[str]:
     """从邮件中提取唯一的链接.
 
+    先转换 URL 格式，再基于转换后的 URL 去重，
+    避免同一篇论文因不同原始 URL 而被重复处理。
+
     Args:
         emails: 邮件列表.
 
     Returns:
-        唯一的 URL 列表.
+        唯一的 URL 列表（已转换格式）.
     """
     seen = set()
     unique_links = []
 
     for email in emails:
         for link in email.get("links", []):
-            if link not in seen:
-                seen.add(link)
-                unique_links.append(link)
+            # 先转换 URL 格式
+            processed_link = process_paper_url(link)
+            if processed_link not in seen:
+                seen.add(processed_link)
+                unique_links.append(processed_link)
 
     return unique_links
 
