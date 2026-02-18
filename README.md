@@ -18,10 +18,12 @@
 
 ## 快速开始
 
-### 1. 克隆仓库
+### 1. Fork 并克隆仓库
 
 ```bash
-git clone https://github.com/yourusername/gmail-scholar-summary.git
+# 先在 GitHub 上 Fork 本仓库到你的账号
+# 然后克隆你的 Fork 到本地
+git clone https://github.com/<your-account>/gmail-scholar-summary.git
 cd gmail-scholar-summary
 ```
 
