@@ -2,6 +2,12 @@
 
 自动从 Gmail 中获取 Google Scholar 论文通知邮件，使用 LLM 生成中文摘要，并发送周报报告。
 
+## 使用场景 / Motivation
+
+在 Google Scholar 为多位研究者订阅了新论文提醒，这些通知通过 Gmail 统一归档到 Scholar 标签。由于没有时间逐一打开阅读，收件箱很快被新论文邮件淹没，难以及时判断哪些论文值得进入自己的文献库。
+
+这个工具会每周自动从这些邮件中提取论文链接、抓取基础信息，并用中文生成结构化摘要（一句话总结、研究背景、核心方法、主要结果），最终输出 Markdown/HTML 周报，帮助快速筛选与保存，减少收件箱负担、提升文献跟踪效率。
+
 ## 功能特性
 
 - 📧 **自动读取 Gmail**: 从指定标签获取未读邮件
@@ -136,7 +142,7 @@ cat token.json | base64
 
 ```yaml
 gmail:
-  label: "Scholar Alerts"      # 监控的标签
+  label: "scholar"      # 监控的标签
   unread_only: true            # 只处理未读邮件
   mark_as_read: true          # 处理后标记为已读
   max_emails: 50              # 每次最多处理邮件数
@@ -168,7 +174,7 @@ uv run pytest
 uv run pytest tests/test_gmail_client.py
 
 # 运行单个测试函数
-uv run pytest tests/test_gmail_client.py -k "test_get_unread_emails"
+uv run pytest tests/test_gmail_client.py -k "test_extract_scholar_url_links"
 ```
 
 ### 代码检查
@@ -189,15 +195,18 @@ gmail-scholar-summary/
 │   ├── fetchers/              # 论文获取（可扩展）
 │   │   ├── base.py
 │   │   ├── simple_html_fetcher.py
+│   │   ├── url_processors.py  # URL 处理器（Google Scholar → arXiv）
 │   │   └── docling_fetcher.py  # 预留
 │   ├── llm_providers/         # LLM Provider（可扩展）
 │   │   ├── base.py
 │   │   ├── openai_provider.py
 │   │   └── gemini_provider.py  # 预留
+│   ├── link_filters.py        # 链接过滤器（筛选论文链接）
+│   ├── config.py              # 配置管理
 │   ├── gmail_client.py
 │   ├── summarizer.py
-│   ├── report_generator.py
-│   └── main.py
+│   └── report_generator.py
+├── main.py                    # 主入口（项目根目录）
 ├── tests/
 ├── config/
 ├── .github/workflows/
