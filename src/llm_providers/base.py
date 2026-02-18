@@ -4,7 +4,7 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Dict, Optional
 
 
 class SummaryResult:
@@ -16,7 +16,7 @@ class SummaryResult:
         background: str,
         method: str,
         results: str,
-        relevance_score: float,
+        relevance_score: Optional[float] = None,
     ):
         """初始化摘要结果.
 
@@ -25,7 +25,7 @@ class SummaryResult:
             background: 研究背景.
             method: 核心方法.
             results: 主要结果.
-            relevance_score: 相关度评分 1-10.
+            relevance_score: 相关度评分 1-10（可选）.
         """
         self.summary = summary
         self.background = background

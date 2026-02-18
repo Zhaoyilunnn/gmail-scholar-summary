@@ -141,15 +141,13 @@ class OpenAIProvider(LLMProvider):
     "summary": "一句话总结（50字以内）",
     "background": "研究背景（100字以内）",
     "method": "核心方法（100字以内）",
-    "results": "主要结果（100字以内）",
-    "relevance_score": 8.5
+    "results": "主要结果（100字以内）"
 }}
 
 要求:
 1. summary 控制在 50 字以内，概括核心贡献
 2. background、method、results 每部分 100 字以内
-3. relevance_score 为 1-10 的浮点数，评估学术价值
-4. 只输出 JSON，不要有其他内容"""
+3. 只输出 JSON，不要有其他内容"""
 
     def _parse_response(self, content: str) -> SummaryResult:
         """解析 API 响应.
@@ -171,7 +169,7 @@ class OpenAIProvider(LLMProvider):
                 background=data.get("background", ""),
                 method=data.get("method", ""),
                 results=data.get("results", ""),
-                relevance_score=float(data.get("relevance_score", 5.0)),
+                relevance_score=None,  # 暂时不启用相关度评分
             )
         except json.JSONDecodeError as e:
             logger.error(f"JSON 解析失败: {e}, content={content}")

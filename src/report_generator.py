@@ -161,9 +161,9 @@ class ReportGenerator:
             lines.append(f"📊 **主要结果**: {results}")
             lines.append("")
 
-        # 相关度评分
-        score = paper.get("relevance_score", 0)
-        if score:
+        # 相关度评分（仅在启用时显示）
+        score = paper.get("relevance_score")
+        if score is not None:
             lines.append(f"⭐ **相关度评分**: {score}/10")
             lines.append("")
 
@@ -188,7 +188,7 @@ class ReportGenerator:
         background = paper.get("background", "")
         method = paper.get("method", "")
         results = paper.get("results", "")
-        score = paper.get("relevance_score", 0)
+        score = paper.get("relevance_score")
 
         html_parts = [
             '<div class="paper">',
@@ -230,7 +230,7 @@ class ReportGenerator:
                 f'<p class="results">📊 <strong>主要结果:</strong> {results}</p>'
             )
 
-        if score:
+        if score is not None:
             html_parts.append(
                 f'<p class="score">⭐ <strong>相关度评分:</strong> {score}/10</p>'
             )

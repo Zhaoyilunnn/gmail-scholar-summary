@@ -90,7 +90,6 @@ class TestOpenAIProvider:
                             "background": "测试背景",
                             "method": "测试方法",
                             "results": "测试结果",
-                            "relevance_score": 8.5,
                         }
                     )
                 )
@@ -107,7 +106,7 @@ class TestOpenAIProvider:
         assert result.background == "测试背景"
         assert result.method == "测试方法"
         assert result.results == "测试结果"
-        assert result.relevance_score == 8.5
+        assert result.relevance_score is None  # 暂时不启用相关度评分
 
     @patch("src.llm_providers.openai_provider.OpenAI")
     def test_summarize_api_error(self, mock_openai_class, provider):

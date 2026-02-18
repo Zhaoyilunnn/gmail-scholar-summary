@@ -199,6 +199,10 @@ gmail-scholar-summary/
 └── README.md
 ```
 
+## 未来功能 (TODO)
+
+- [ ] **基于研究兴趣的相关度评分**：支持配置个人研究兴趣，LLM 自动判断论文与兴趣的匹配度并输出评分
+
 ## License
 
 Apache License 2.0
