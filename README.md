@@ -60,6 +60,8 @@ uv run python src/main.py
 
 ### 2. 生成 Gmail 凭证
 
+<details> <summary>点击展开详细步骤</summary>
+
 #### 步骤 1: 创建 Google Cloud 项目
 
 1. 访问 [Google Cloud Console](https://console.cloud.google.com/)
@@ -120,6 +122,9 @@ cat token.json | base64
 - `GMAIL_TOKEN`: token.json 的 base64
 
 **注意**: token.json 包含 refresh token，有效期较长。如果授权过期，需要重新生成本地 token 并更新 Secret。
+
+
+</details>
 
 ### 3. 手动触发
 
