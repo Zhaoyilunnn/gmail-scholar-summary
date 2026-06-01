@@ -8,10 +8,19 @@
 import logging
 import re
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import List, Optional
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ProcessedURL:
+    """处理后的论文 URL 及元数据提示."""
+
+    url: str
+    title_hint: str = ""
 
 
 class URLProcessor(ABC):
@@ -48,12 +57,13 @@ class URLProcessor(ABC):
 class GoogleScholarProcessor(URLProcessor):
     """Google Scholar 重定向链接处理器.
 
-    从 scholar.google.com/scholar_url?url=xxx 格式的链接中提取实际 URL.
+    从 scholar.google.com/scholar_url?url=xxx 和 scholar_share?url=xxx
+    格式的链接中提取实际 URL.
     """
 
     def can_process(self, url: str) -> bool:
         """检查是否是 Google Scholar 重定向链接."""
-        return "scholar.google.com/scholar_url" in url
+        return self._is_scholar_redirect(url)
 
     def process(self, url: str) -> str:
         """提取 scholar_url 中的实际 URL 参数.
@@ -71,18 +81,9 @@ class GoogleScholarProcessor(URLProcessor):
             'https://arxiv.org/pdf/1234'
         """
         try:
-            # 解析 URL
-            parsed = urlparse(url)
-
-            # 从查询参数中提取 url
-            from urllib.parse import parse_qs
-
-            query_params = parse_qs(parsed.query)
-
-            if "url" in query_params:
-                actual_url = query_params["url"][0]
-                # URL decode
-                actual_url = unquote(actual_url)
+            processed = self.process_with_metadata(url)
+            if processed.url != url:
+                actual_url = processed.url
                 logger.debug(f"从 Google Scholar 提取 URL: {actual_url}")
                 return actual_url
 
@@ -91,6 +92,38 @@ class GoogleScholarProcessor(URLProcessor):
 
         # 如果解析失败，返回原始 URL
         return url
+
+    def process_with_metadata(self, url: str) -> ProcessedURL:
+        """提取 Google Scholar 链接中的目标 URL 和标题提示.
+
+        Args:
+            url: Google Scholar URL.
+
+        Returns:
+            处理后的 URL 信息.
+        """
+        if not self._is_scholar_redirect(url):
+            return ProcessedURL(url=url)
+
+        parsed = urlparse(url)
+        query_params = parse_qs(parsed.query)
+        if "url" not in query_params:
+            return ProcessedURL(url=url)
+
+        actual_url = unquote(query_params["url"][0])
+        title_hint = ""
+        if "rt" in query_params:
+            title_hint = unquote(query_params["rt"][0]).replace("+", " ").strip()
+
+        return ProcessedURL(url=actual_url, title_hint=title_hint)
+
+    def _is_scholar_redirect(self, url: str) -> bool:
+        """检查是否是 Google Scholar URL 包装链接."""
+        parsed = urlparse(url)
+        return parsed.netloc.lower() == "scholar.google.com" and parsed.path in {
+            "/scholar_url",
+            "/scholar_share",
+        }
 
 
 class ArxivProcessor(URLProcessor):
@@ -196,6 +229,32 @@ class URLProcessorChain:
 
         return current_url
 
+    def process_with_metadata(self, url: str) -> ProcessedURL:
+        """处理 URL 并保留标题提示.
+
+        Args:
+            url: 原始 URL.
+
+        Returns:
+            处理后的 URL 信息.
+        """
+        title_hint = ""
+        current_url = url
+
+        for processor in self.processors:
+            if isinstance(processor, GoogleScholarProcessor) and processor.can_process(
+                current_url
+            ):
+                processed = processor.process_with_metadata(current_url)
+                current_url = processed.url
+                title_hint = title_hint or processed.title_hint
+                continue
+
+            if processor.can_process(current_url):
+                current_url = processor.process(current_url)
+
+        return ProcessedURL(url=current_url, title_hint=title_hint)
+
 
 # 默认处理器链
 default_processor_chain = (
@@ -223,3 +282,15 @@ def process_paper_url(url: str) -> str:
         'https://arxiv.org/abs/2401.12345'
     """
     return default_processor_chain.process(url)
+
+
+def process_paper_url_with_metadata(url: str) -> ProcessedURL:
+    """处理论文 URL 并保留元数据提示.
+
+    Args:
+        url: 原始论文 URL.
+
+    Returns:
+        处理后的 URL 信息.
+    """
+    return default_processor_chain.process_with_metadata(url)

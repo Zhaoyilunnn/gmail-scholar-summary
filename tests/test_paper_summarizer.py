@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from src.fetchers import PaperFetchError, PaperInfo
+from src.fetchers.url_processors import ProcessedURL
 from src.llm_providers import LLMError, SummaryResult
 from src.summarizer import PaperSummarizer, SummarizerError
 
@@ -133,6 +134,64 @@ class TestProcessUrl:
         result = summarizer.process_url("https://arxiv.org/abs/2401.12345")
 
         assert result is None
+
+    def test_process_url_empty_abstract_does_not_call_llm(self, summarizer):
+        """测试摘要为空时不调用 LLM."""
+        summarizer.fetcher.fetch.return_value = PaperInfo(
+            title="Test Paper",
+            authors=[],
+            abstract="",
+            url="https://example.com/paper",
+        )
+
+        result = summarizer.process_url("https://example.com/paper")
+
+        assert result is None
+        summarizer.llm_provider.summarize.assert_not_called()
+
+    def test_process_url_block_page_does_not_call_llm(self, summarizer):
+        """测试反爬页面不调用 LLM."""
+        summarizer.fetcher.fetch.return_value = PaperInfo(
+            title="Please show you're not a robot",
+            authors=[],
+            abstract="Please show you're not a robot",
+            url="https://example.com/paper",
+        )
+
+        result = summarizer.process_url("https://example.com/paper")
+
+        assert result is None
+        summarizer.llm_provider.summarize.assert_not_called()
+
+    def test_process_processed_url_uses_fetch_processed(self):
+        """测试处理 ProcessedURL 时调用 fetch_processed."""
+        mock_fetcher = Mock()
+        mock_provider = Mock()
+        mock_provider.is_available.return_value = True
+        mock_fetcher.fetch_processed.return_value = PaperInfo(
+            title="Test Paper",
+            authors=[],
+            abstract="Test abstract",
+            url="https://example.com/paper",
+        )
+        mock_provider.summarize.return_value = SummaryResult(
+            summary="Summary",
+            background="Background",
+            method="Method",
+            results="Results",
+            relevance_score=None,
+        )
+        summarizer = PaperSummarizer(
+            fetcher=mock_fetcher,
+            llm_provider=mock_provider,
+        )
+
+        result = summarizer.process_url(
+            ProcessedURL(url="https://example.com/paper", title_hint="Test Paper")
+        )
+
+        assert result is not None
+        mock_fetcher.fetch_processed.assert_called_once()
 
 
 class TestProcessUrls:

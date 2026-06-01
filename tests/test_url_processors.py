@@ -8,6 +8,7 @@ from src.fetchers.url_processors import (
     URLProcessorChain,
     default_processor_chain,
     process_paper_url,
+    process_paper_url_with_metadata,
 )
 
 
@@ -79,6 +80,16 @@ class TestGoogleScholarProcessor:
         url = (
             "https://scholar.google.com/scholar_url?"
             "url=https://ieeexplore.ieee.org/abstract/document/1234567/"
+        )
+        result = processor.process(url)
+        assert result == "https://ieeexplore.ieee.org/abstract/document/1234567/"
+
+    def test_process_scholar_share(self, processor):
+        """测试处理 Google Scholar 分享链接."""
+        url = (
+            "https://scholar.google.com/scholar_share?"
+            "url=https://ieeexplore.ieee.org/abstract/document/1234567/&"
+            "rt=Test+Paper"
         )
         result = processor.process(url)
         assert result == "https://ieeexplore.ieee.org/abstract/document/1234567/"
@@ -232,3 +243,15 @@ class TestProcessPaperUrl:
         url = "https://arxiv.org/pdf/2401.12345"
         result = process_paper_url(url)
         assert result == "https://arxiv.org/abs/2401.12345"
+
+    def test_scholar_share_with_title_hint(self):
+        """测试处理 Scholar share 链接并保留标题提示."""
+        url = (
+            "https://scholar.google.com/scholar_share?"
+            "url=https://ieeexplore.ieee.org/abstract/document/11527248/&"
+            "rt=Cleaning+up+the+Mess"
+        )
+        result = process_paper_url_with_metadata(url)
+
+        assert result.url == "https://ieeexplore.ieee.org/abstract/document/11527248/"
+        assert result.title_hint == "Cleaning up the Mess"

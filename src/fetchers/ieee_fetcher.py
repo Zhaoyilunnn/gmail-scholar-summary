@@ -13,6 +13,7 @@ from .html_metadata import (
     get_all_meta_contents,
     get_meta_content,
     get_text_by_selectors,
+    is_blocked_text,
     normalize_whitespace,
 )
 
@@ -149,6 +150,8 @@ class IEEEFetcher(PaperFetcher):
             raise PaperFetchError(f"无法从 IEEE 页面提取标题: {url}")
         if not abstract:
             raise PaperFetchError(f"无法从 IEEE 页面提取摘要: {url}")
+        if is_blocked_text(title) or is_blocked_text(abstract):
+            raise PaperFetchError(f"IEEE 页面疑似反爬或验证码页面: {url}")
 
         return PaperInfo(
             title=title,

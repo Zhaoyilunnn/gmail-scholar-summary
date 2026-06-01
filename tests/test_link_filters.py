@@ -77,6 +77,15 @@ class TestNonPaperLinkFilter:
         )
         assert filter.should_keep(url)
 
+    def test_keep_scholar_share_to_ieee_abstract_document(self, filter):
+        """测试保留指向 IEEE abstract document 的 Scholar 分享链接."""
+        url = (
+            "https://scholar.google.com/scholar_share?"
+            "url=https://ieeexplore.ieee.org/abstract/document/1234567/&"
+            "rt=Test+Paper"
+        )
+        assert filter.should_keep(url)
+
     def test_filter_scholar_url_to_cleardot_image(self, filter):
         """测试过滤指向 cleardot.gif 的 Scholar 重定向."""
         url = (

@@ -9,6 +9,7 @@ from .base import PaperFetchError, PaperFetcher, PaperInfo
 from .acm_fetcher import ACMFetcher
 from .composite_fetcher import CompositeFetcher
 from .ieee_fetcher import IEEEFetcher
+from .metadata_fetcher import MetadataFetcher
 from .simple_html_fetcher import SimpleHTMLFetcher
 
 __all__ = [
@@ -18,6 +19,7 @@ __all__ = [
     "ACMFetcher",
     "CompositeFetcher",
     "IEEEFetcher",
+    "MetadataFetcher",
     "SimpleHTMLFetcher",
 ]
 

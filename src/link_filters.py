@@ -54,7 +54,7 @@ class NonPaperLinkFilter(LinkFilter):
 
     # 论文链接的正面特征（必须包含其中之一）
     PAPER_INDICATORS: List[str] = [
-        r"scholar_url",  # Google Scholar 重定向链接
+        r"scholar_(url|share)",  # Google Scholar 包装链接
         r"arxiv\.org/(abs|pdf)/",  # arXiv 论文
         r"dl\.acm\.org/doi/",  # ACM Digital Library 论文
         r"ieeexplore\.ieee\.org/(abstract/)?document/",  # IEEE Xplore 论文
@@ -75,7 +75,7 @@ class NonPaperLinkFilter(LinkFilter):
                 logger.debug(f"过滤非论文链接: {url[:60]}... (匹配: {pattern})")
                 return False
 
-        # Google Scholar 重定向链接需要检查目标 URL，避免保留 cleardot.gif 等资源。
+        # Google Scholar 包装链接需要检查目标 URL，避免保留 cleardot.gif 等资源。
         scholar_target = self._extract_scholar_target(url)
         if scholar_target:
             return self.should_keep(scholar_target)
@@ -98,10 +98,12 @@ class NonPaperLinkFilter(LinkFilter):
         Returns:
             重定向目标 URL，未找到时返回空字符串.
         """
-        if "scholar.google.com/scholar_url" not in url:
+        parsed = urlparse(url)
+        if parsed.netloc.lower() != "scholar.google.com":
+            return ""
+        if parsed.path not in {"/scholar_url", "/scholar_share"}:
             return ""
 
-        parsed = urlparse(url)
         query_params = parse_qs(parsed.query)
         if "url" not in query_params:
             return ""

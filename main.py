@@ -13,8 +13,12 @@ from typing import List
 # 加载 .env 文件环境变量
 from dotenv import load_dotenv
 from src.config import Config
+from src.fetchers.acm_fetcher import ACMFetcher
+from src.fetchers.composite_fetcher import CompositeFetcher
+from src.fetchers.ieee_fetcher import IEEEFetcher
+from src.fetchers.metadata_fetcher import MetadataFetcher
 from src.fetchers.simple_html_fetcher import SimpleHTMLFetcher
-from src.fetchers.url_processors import process_paper_url
+from src.fetchers.url_processors import ProcessedURL, process_paper_url_with_metadata
 from src.gmail_client import GmailClient, GmailClientError
 from src.llm_providers.openai_provider import OpenAIProvider
 from src.report_generator import ReportGenerator
@@ -118,7 +122,7 @@ def decode_credentials() -> None:
             f.write(base64.b64decode(gmail_token).decode())
 
 
-def get_unique_links(emails: List[dict]) -> List[str]:
+def get_unique_links(emails: List[dict]) -> List[ProcessedURL]:
     """从邮件中提取唯一的链接.
 
     先转换 URL 格式，再基于转换后的 URL 去重，
@@ -131,14 +135,14 @@ def get_unique_links(emails: List[dict]) -> List[str]:
         唯一的 URL 列表（已转换格式）.
     """
     seen = set()
-    unique_links = []
+    unique_links: List[ProcessedURL] = []
 
     for email in emails:
         for link in email.get("links", []):
             # 先转换 URL 格式
-            processed_link = process_paper_url(link)
-            if processed_link not in seen:
-                seen.add(processed_link)
+            processed_link = process_paper_url_with_metadata(link)
+            if processed_link.url not in seen:
+                seen.add(processed_link.url)
                 unique_links.append(processed_link)
 
     return unique_links
@@ -220,9 +224,24 @@ def main() -> int:
         # 6. 初始化 Summarizer
         logger.info("初始化论文摘要器...")
         summarizer = PaperSummarizer(
-            fetcher=SimpleHTMLFetcher(
-                timeout_sec=config.fetcher.timeout_sec,
-                retry_times=config.fetcher.retry_times,
+            fetcher=CompositeFetcher(
+                fetchers=[
+                    SimpleHTMLFetcher(
+                        timeout_sec=config.fetcher.timeout_sec,
+                        retry_times=config.fetcher.retry_times,
+                    ),
+                    ACMFetcher(
+                        timeout_sec=config.fetcher.timeout_sec,
+                        retry_times=config.fetcher.retry_times,
+                    ),
+                    IEEEFetcher(
+                        timeout_sec=config.fetcher.timeout_sec,
+                        retry_times=config.fetcher.retry_times,
+                    ),
+                ],
+                metadata_fetcher=MetadataFetcher(
+                    timeout_sec=config.fetcher.timeout_sec,
+                ),
             ),
             llm_provider=OpenAIProvider(),
         )

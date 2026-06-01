@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import pytest
 
 from src.fetchers import CompositeFetcher, PaperFetchError, PaperInfo
+from src.fetchers.url_processors import ProcessedURL
 
 
 class TestCompositeFetcher:
@@ -79,3 +80,34 @@ class TestCompositeFetcher:
 
         with pytest.raises(PaperFetchError, match="不支持的 URL"):
             fetcher.fetch("https://example.com/paper")
+
+    def test_fetch_processed_falls_back_to_metadata(self):
+        """测试页面解析失败后 fallback 到元数据源."""
+        child_fetcher = Mock()
+        child_fetcher.can_fetch.return_value = True
+        child_fetcher.fetch.side_effect = PaperFetchError("captcha")
+
+        metadata_fetcher = Mock()
+        metadata_fetcher.fetch.return_value = PaperInfo(
+            title="Fallback Paper",
+            authors=[],
+            abstract="Fallback abstract",
+            url="https://ieeexplore.ieee.org/abstract/document/1234567/",
+        )
+
+        fetcher = CompositeFetcher(
+            fetchers=[child_fetcher],
+            metadata_fetcher=metadata_fetcher,
+        )
+        result = fetcher.fetch_processed(
+            ProcessedURL(
+                url="https://ieeexplore.ieee.org/abstract/document/1234567/",
+                title_hint="Fallback Paper",
+            )
+        )
+
+        assert result.title == "Fallback Paper"
+        metadata_fetcher.fetch.assert_called_once_with(
+            "https://ieeexplore.ieee.org/abstract/document/1234567/",
+            title_hint="Fallback Paper",
+        )

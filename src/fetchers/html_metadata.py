@@ -5,6 +5,15 @@ from typing import List
 
 from bs4 import BeautifulSoup
 
+BLOCKED_TEXT_PATTERNS = [
+    r"please show you'?re not a robot",
+    r"access denied",
+    r"captcha",
+    r"cloudflare",
+    r"forbidden",
+    r"verify you are human",
+]
+
 
 def normalize_whitespace(text: str) -> str:
     """归一化空白字符.
@@ -16,6 +25,19 @@ def normalize_whitespace(text: str) -> str:
         空白字符归一化后的文本.
     """
     return re.sub(r"\s+", " ", text).strip()
+
+
+def is_blocked_text(text: str) -> bool:
+    """检查文本是否像反爬或验证码页面.
+
+    Args:
+        text: 待检查文本.
+
+    Returns:
+        是否为反爬或验证码文本.
+    """
+    normalized = normalize_whitespace(text).lower()
+    return any(re.search(pattern, normalized) for pattern in BLOCKED_TEXT_PATTERNS)
 
 
 def get_meta_content(soup: BeautifulSoup, names: List[str]) -> str:

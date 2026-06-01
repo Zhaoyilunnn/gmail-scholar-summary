@@ -4,10 +4,12 @@
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from src.fetchers import PaperFetchError, PaperFetcher
 from src.fetchers.composite_fetcher import CompositeFetcher
+from src.fetchers.html_metadata import is_blocked_text
+from src.fetchers.url_processors import ProcessedURL
 from src.llm_providers import LLMError, LLMProvider
 from src.llm_providers.openai_provider import OpenAIProvider
 
@@ -47,21 +49,34 @@ class PaperSummarizer:
         if not self.llm_provider.is_available():
             raise SummarizerError("LLM Provider 不可用，请检查 API Key 配置")
 
-    def process_url(self, url: str) -> Optional[Dict]:
+    def process_url(self, url: Union[str, ProcessedURL]) -> Optional[Dict]:
         """处理单个 URL，获取论文信息并生成摘要.
 
         Args:
-            url: 论文页面 URL.
+            url: 论文页面 URL 或已处理 URL.
 
         Returns:
             包含论文信息和摘要的字典，失败返回 None.
         """
-        logger.info(f"处理论文: {url}")
+        log_url = url.url if isinstance(url, ProcessedURL) else url
+        logger.info(f"处理论文: {log_url}")
 
         try:
             # 1. 获取论文信息
-            paper_info = self.fetcher.fetch(url)
+            if isinstance(url, ProcessedURL) and hasattr(
+                self.fetcher, "fetch_processed"
+            ):
+                paper_info = self.fetcher.fetch_processed(url)  # type: ignore
+            else:
+                paper_info = self.fetcher.fetch(log_url)
             logger.debug(f"获取论文信息成功: {paper_info.title}")
+
+            if not paper_info.abstract.strip():
+                raise PaperFetchError(f"论文摘要为空: {log_url}")
+            if is_blocked_text(paper_info.title) or is_blocked_text(
+                paper_info.abstract
+            ):
+                raise PaperFetchError(f"论文信息疑似反爬或验证码页面: {log_url}")
 
             # 2. 生成摘要
             summary = self.llm_provider.summarize(paper_info.title, paper_info.abstract)
@@ -74,16 +89,16 @@ class PaperSummarizer:
             }
 
         except PaperFetchError as e:
-            logger.error(f"获取论文信息失败: {url} - {e}")
+            logger.error(f"获取论文信息失败: {log_url} - {e}")
             return None
         except LLMError as e:
-            logger.error(f"生成摘要失败: {url} - {e}")
+            logger.error(f"生成摘要失败: {log_url} - {e}")
             return None
         except Exception as e:
-            logger.error(f"处理论文时发生未知错误: {url} - {e}")
+            logger.error(f"处理论文时发生未知错误: {log_url} - {e}")
             return None
 
-    def process_urls(self, urls: List[str]) -> List[Dict]:
+    def process_urls(self, urls: List[Union[str, ProcessedURL]]) -> List[Dict]:
         """批量处理多个 URL.
 
         Args:
