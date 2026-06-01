@@ -8,7 +8,7 @@ import os
 
 import pytest
 
-from src.fetchers import ACMFetcher, IEEEFetcher
+from src.fetchers import ACMFetcher, IEEEFetcher, PaperFetchError
 
 pytestmark = [
     pytest.mark.live,
@@ -19,6 +19,17 @@ pytestmark = [
 ]
 
 
+def _skip_if_publisher_blocks(error: PaperFetchError) -> None:
+    """发布商反爬拦截时跳过 live 测试.
+
+    Args:
+        error: Fetcher 抛出的错误.
+    """
+    message = str(error)
+    if "403" in message or "Forbidden" in message:
+        pytest.skip(f"发布商拒绝当前网络环境的请求: {message}")
+
+
 def test_live_acm_fetcher():
     """测试真实 ACM 页面解析."""
     url = os.getenv(
@@ -27,7 +38,11 @@ def test_live_acm_fetcher():
     )
     fetcher = ACMFetcher()
 
-    result = fetcher.fetch(url)
+    try:
+        result = fetcher.fetch(url)
+    except PaperFetchError as e:
+        _skip_if_publisher_blocks(e)
+        raise
 
     assert result.title
     assert result.abstract
@@ -41,7 +56,11 @@ def test_live_ieee_fetcher():
     )
     fetcher = IEEEFetcher()
 
-    result = fetcher.fetch(url)
+    try:
+        result = fetcher.fetch(url)
+    except PaperFetchError as e:
+        _skip_if_publisher_blocks(e)
+        raise
 
     assert result.title
     assert result.abstract
