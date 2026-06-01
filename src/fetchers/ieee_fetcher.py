@@ -52,7 +52,9 @@ class IEEEFetcher(PaperFetcher):
         parsed = urlparse(url)
         host = parsed.netloc.lower()
         path = parsed.path.lower()
-        return host == "ieeexplore.ieee.org" and path.startswith("/document/")
+        return host == "ieeexplore.ieee.org" and (
+            path.startswith("/document/") or path.startswith("/abstract/document/")
+        )
 
     def fetch(self, url: str) -> PaperInfo:
         """从 IEEE Xplore URL 获取论文信息.

@@ -64,6 +64,27 @@ class TestNonPaperLinkFilter:
         url = "https://ieeexplore.ieee.org/document/1234567"
         assert filter.should_keep(url)
 
+    def test_keep_ieee_abstract_document_link(self, filter):
+        """测试保留 IEEE abstract document 页面链接."""
+        url = "https://ieeexplore.ieee.org/abstract/document/1234567/"
+        assert filter.should_keep(url)
+
+    def test_keep_scholar_url_to_ieee_abstract_document(self, filter):
+        """测试保留指向 IEEE abstract document 的 Scholar 重定向."""
+        url = (
+            "https://scholar.google.com/scholar_url?"
+            "url=https://ieeexplore.ieee.org/abstract/document/1234567/"
+        )
+        assert filter.should_keep(url)
+
+    def test_filter_scholar_url_to_cleardot_image(self, filter):
+        """测试过滤指向 cleardot.gif 的 Scholar 重定向."""
+        url = (
+            "https://scholar.google.com/scholar_url?"
+            "url=https://scholar.google.com/scholar/images/cleardot.gif"
+        )
+        assert not filter.should_keep(url)
+
     def test_filter_acm_search_link(self, filter):
         """测试过滤 ACM 搜索页面链接."""
         url = "https://dl.acm.org/action/doSearch?AllField=machine+learning"

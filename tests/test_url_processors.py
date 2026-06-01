@@ -74,6 +74,15 @@ class TestGoogleScholarProcessor:
         result = processor.process(url)
         assert result == "https://ieeexplore.ieee.org/document/1234567"
 
+    def test_process_scholar_to_ieee_abstract_document(self, processor):
+        """测试处理 Google Scholar 到 IEEE abstract document 的重定向."""
+        url = (
+            "https://scholar.google.com/scholar_url?"
+            "url=https://ieeexplore.ieee.org/abstract/document/1234567/"
+        )
+        result = processor.process(url)
+        assert result == "https://ieeexplore.ieee.org/abstract/document/1234567/"
+
     def test_process_invalid_url(self, processor):
         """测试处理无效的 scholar URL（没有 url 参数）."""
         url = "https://scholar.google.com/scholar_url?hl=zh-CN"

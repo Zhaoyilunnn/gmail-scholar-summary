@@ -7,6 +7,7 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from typing import List, Optional, Set
+from urllib.parse import parse_qs, unquote, urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ class NonPaperLinkFilter(LinkFilter):
         r"scholar_url",  # Google Scholar 重定向链接
         r"arxiv\.org/(abs|pdf)/",  # arXiv 论文
         r"dl\.acm\.org/doi/",  # ACM Digital Library 论文
-        r"ieeexplore\.ieee\.org/document/",  # IEEE Xplore 论文
+        r"ieeexplore\.ieee\.org/(abstract/)?document/",  # IEEE Xplore 论文
     ]
 
     def should_keep(self, url: str) -> bool:
@@ -74,6 +75,11 @@ class NonPaperLinkFilter(LinkFilter):
                 logger.debug(f"过滤非论文链接: {url[:60]}... (匹配: {pattern})")
                 return False
 
+        # Google Scholar 重定向链接需要检查目标 URL，避免保留 cleardot.gif 等资源。
+        scholar_target = self._extract_scholar_target(url)
+        if scholar_target:
+            return self.should_keep(scholar_target)
+
         # 然后检查是否包含论文特征
         for pattern in self.PAPER_INDICATORS:
             if re.search(pattern, url, re.IGNORECASE):
@@ -82,6 +88,25 @@ class NonPaperLinkFilter(LinkFilter):
         # 默认过滤掉（保守策略）
         logger.debug(f"过滤未知链接: {url[:60]}...")
         return False
+
+    def _extract_scholar_target(self, url: str) -> str:
+        """提取 Google Scholar 重定向目标 URL.
+
+        Args:
+            url: 待检查的 URL.
+
+        Returns:
+            重定向目标 URL，未找到时返回空字符串.
+        """
+        if "scholar.google.com/scholar_url" not in url:
+            return ""
+
+        parsed = urlparse(url)
+        query_params = parse_qs(parsed.query)
+        if "url" not in query_params:
+            return ""
+
+        return unquote(query_params["url"][0])
 
 
 class LinkExtractor:

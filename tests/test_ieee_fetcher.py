@@ -19,6 +19,9 @@ class TestIEEEFetcher:
         """测试能识别 IEEE document 页面."""
         assert fetcher.can_fetch("https://ieeexplore.ieee.org/document/1234567")
         assert fetcher.can_fetch("https://ieeexplore.ieee.org/document/1234567/")
+        assert fetcher.can_fetch(
+            "https://ieeexplore.ieee.org/abstract/document/1234567/"
+        )
 
     def test_cannot_fetch_non_ieee_document(self, fetcher):
         """测试不能识别非 IEEE 论文页面."""
