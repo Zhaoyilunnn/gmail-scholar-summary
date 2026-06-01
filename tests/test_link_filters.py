@@ -54,6 +54,26 @@ class TestNonPaperLinkFilter:
         url = "https://arxiv.org/pdf/2401.12345.pdf"
         assert filter.should_keep(url)
 
+    def test_keep_acm_doi_link(self, filter):
+        """测试保留 ACM DOI 页面链接."""
+        url = "https://dl.acm.org/doi/10.1145/1234567.8901234"
+        assert filter.should_keep(url)
+
+    def test_keep_ieee_document_link(self, filter):
+        """测试保留 IEEE document 页面链接."""
+        url = "https://ieeexplore.ieee.org/document/1234567"
+        assert filter.should_keep(url)
+
+    def test_filter_acm_search_link(self, filter):
+        """测试过滤 ACM 搜索页面链接."""
+        url = "https://dl.acm.org/action/doSearch?AllField=machine+learning"
+        assert not filter.should_keep(url)
+
+    def test_filter_ieee_search_link(self, filter):
+        """测试过滤 IEEE 搜索页面链接."""
+        url = "https://ieeexplore.ieee.org/search/searchresult.jsp"
+        assert not filter.should_keep(url)
+
     def test_filter_unknown_link(self, filter):
         """测试过滤未知链接（保守策略）."""
         url = "https://example.com/paper.pdf"
@@ -89,6 +109,20 @@ class TestLinkExtractor:
         # 应该保留 2 个论文链接
         assert len(links) == 2
         assert all("arxiv.org" in link or "scholar_url" in link for link in links)
+
+    def test_extract_acm_and_ieee_papers(self):
+        """测试提取 ACM 和 IEEE 论文链接."""
+        text = """
+        ACM: https://dl.acm.org/doi/10.1145/1234567.8901234
+        IEEE: https://ieeexplore.ieee.org/document/1234567
+        Search: https://ieeexplore.ieee.org/search/searchresult.jsp
+        """
+        extractor = LinkExtractor()
+        links = extractor.extract_links(text)
+
+        assert len(links) == 2
+        assert any("dl.acm.org/doi/" in link for link in links)
+        assert any("ieeexplore.ieee.org/document/" in link for link in links)
 
     def test_extract_deduplicate(self):
         """测试去重功能."""

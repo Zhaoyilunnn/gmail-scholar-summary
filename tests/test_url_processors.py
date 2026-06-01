@@ -56,6 +56,24 @@ class TestGoogleScholarProcessor:
         result = processor.process(url)
         assert result == "https://arxiv.org/pdf/2401.12345"
 
+    def test_process_scholar_to_acm(self, processor):
+        """测试处理 Google Scholar 到 ACM 的重定向."""
+        url = (
+            "https://scholar.google.com/scholar_url?"
+            "url=https://dl.acm.org/doi/10.1145/1234567.8901234"
+        )
+        result = processor.process(url)
+        assert result == "https://dl.acm.org/doi/10.1145/1234567.8901234"
+
+    def test_process_scholar_to_ieee(self, processor):
+        """测试处理 Google Scholar 到 IEEE 的重定向."""
+        url = (
+            "https://scholar.google.com/scholar_url?"
+            "url=https://ieeexplore.ieee.org/document/1234567"
+        )
+        result = processor.process(url)
+        assert result == "https://ieeexplore.ieee.org/document/1234567"
+
     def test_process_invalid_url(self, processor):
         """测试处理无效的 scholar URL（没有 url 参数）."""
         url = "https://scholar.google.com/scholar_url?hl=zh-CN"
@@ -177,6 +195,18 @@ class TestDefaultProcessorChain:
         url = "https://example.com/paper.pdf"
         result = default_processor_chain.process(url)
         assert result == "https://example.com/paper.pdf"
+
+    def test_direct_acm_url_no_change(self):
+        """测试 ACM 直链保持不变."""
+        url = "https://dl.acm.org/doi/10.1145/1234567.8901234"
+        result = default_processor_chain.process(url)
+        assert result == url
+
+    def test_direct_ieee_url_no_change(self):
+        """测试 IEEE 直链保持不变."""
+        url = "https://ieeexplore.ieee.org/document/1234567"
+        result = default_processor_chain.process(url)
+        assert result == url
 
 
 class TestProcessPaperUrl:

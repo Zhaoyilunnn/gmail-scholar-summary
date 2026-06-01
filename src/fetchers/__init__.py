@@ -6,12 +6,18 @@
 import importlib.util
 
 from .base import PaperFetchError, PaperFetcher, PaperInfo
+from .acm_fetcher import ACMFetcher
+from .composite_fetcher import CompositeFetcher
+from .ieee_fetcher import IEEEFetcher
 from .simple_html_fetcher import SimpleHTMLFetcher
 
 __all__ = [
     "PaperFetcher",
     "PaperInfo",
     "PaperFetchError",
+    "ACMFetcher",
+    "CompositeFetcher",
+    "IEEEFetcher",
     "SimpleHTMLFetcher",
 ]
 

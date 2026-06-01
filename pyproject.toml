@@ -21,3 +21,8 @@ dev = [
     "pre-commit>=4.0.0",
     "ruff>=0.15.1",
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "live: tests that make real network requests",
+]

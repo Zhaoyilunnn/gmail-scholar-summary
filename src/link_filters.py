@@ -55,6 +55,8 @@ class NonPaperLinkFilter(LinkFilter):
     PAPER_INDICATORS: List[str] = [
         r"scholar_url",  # Google Scholar 重定向链接
         r"arxiv\.org/(abs|pdf)/",  # arXiv 论文
+        r"dl\.acm\.org/doi/",  # ACM Digital Library 论文
+        r"ieeexplore\.ieee\.org/document/",  # IEEE Xplore 论文
     ]
 
     def should_keep(self, url: str) -> bool:

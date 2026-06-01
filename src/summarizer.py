@@ -7,7 +7,7 @@ import logging
 from typing import Dict, List, Optional
 
 from src.fetchers import PaperFetchError, PaperFetcher
-from src.fetchers.simple_html_fetcher import SimpleHTMLFetcher
+from src.fetchers.composite_fetcher import CompositeFetcher
 from src.llm_providers import LLMError, LLMProvider
 from src.llm_providers.openai_provider import OpenAIProvider
 
@@ -34,13 +34,13 @@ class PaperSummarizer:
         """初始化摘要器.
 
         Args:
-            fetcher: 论文获取器，默认使用 SimpleHTMLFetcher.
+            fetcher: 论文获取器，默认使用 CompositeFetcher.
             llm_provider: LLM Provider，默认使用 OpenAIProvider.
 
         Raises:
             SummarizerError: 初始化失败.
         """
-        self.fetcher = fetcher or SimpleHTMLFetcher()
+        self.fetcher = fetcher or CompositeFetcher()
         self.llm_provider = llm_provider or OpenAIProvider()
 
         # 检查 LLM Provider 是否可用
