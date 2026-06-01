@@ -6,6 +6,7 @@
 import logging
 import re
 from abc import ABC, abstractmethod
+from html import unescape as html_unescape
 from typing import List, Optional, Set
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -69,6 +70,8 @@ class NonPaperLinkFilter(LinkFilter):
         Returns:
             True 如果是论文链接，False 如果不是.
         """
+        url = html_unescape(url)
+
         # 首先检查是否包含非论文特征
         for pattern in self.NON_PAPER_PATTERNS:
             if re.search(pattern, url, re.IGNORECASE):
@@ -98,6 +101,7 @@ class NonPaperLinkFilter(LinkFilter):
         Returns:
             重定向目标 URL，未找到时返回空字符串.
         """
+        url = html_unescape(url)
         parsed = urlparse(url)
         if parsed.netloc.lower() != "scholar.google.com":
             return ""
@@ -144,7 +148,7 @@ class LinkExtractor:
         cleaned_urls: Set[str] = set()
         for url in urls:
             # 去除末尾的标点
-            url = url.rstrip(".,;:!?)")
+            url = html_unescape(url.rstrip(".,;:!?)"))
             cleaned_urls.add(url)
 
         # 应用过滤器

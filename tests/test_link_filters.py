@@ -86,6 +86,24 @@ class TestNonPaperLinkFilter:
         )
         assert filter.should_keep(url)
 
+    def test_keep_scholar_share_with_html_entities(self, filter):
+        """测试保留包含 HTML entity 的 Scholar 分享链接."""
+        url = (
+            "https://scholar.google.com/scholar_share?"
+            "hl=en&amp;oi=scholaralrt&amp;ss=in&amp;"
+            "url=https://ieeexplore.ieee.org/abstract/document/1234567/&amp;"
+            "rt=Test+Paper"
+        )
+        assert filter.should_keep(url)
+
+    def test_filter_scholar_share_with_html_entities_to_cleardot(self, filter):
+        """测试过滤包含 HTML entity 且指向 cleardot 的 Scholar 分享链接."""
+        url = (
+            "https://scholar.google.com/scholar_share?"
+            "hl=en&amp;url=https://scholar.google.com/scholar/images/cleardot.gif"
+        )
+        assert not filter.should_keep(url)
+
     def test_filter_scholar_url_to_cleardot_image(self, filter):
         """测试过滤指向 cleardot.gif 的 Scholar 重定向."""
         url = (

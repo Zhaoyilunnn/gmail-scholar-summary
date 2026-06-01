@@ -255,3 +255,16 @@ class TestProcessPaperUrl:
 
         assert result.url == "https://ieeexplore.ieee.org/abstract/document/11527248/"
         assert result.title_hint == "Cleaning up the Mess"
+
+    def test_scholar_share_with_html_entities(self):
+        """测试处理包含 HTML entity 的 Scholar share 链接."""
+        url = (
+            "https://scholar.google.com/scholar_share?"
+            "hl=en&amp;oi=scholaralrt&amp;ss=in&amp;"
+            "url=https://ieeexplore.ieee.org/abstract/document/11527248/&amp;"
+            "rt=Cleaning+up+the+Mess&amp;scisig=x"
+        )
+        result = process_paper_url_with_metadata(url)
+
+        assert result.url == "https://ieeexplore.ieee.org/abstract/document/11527248/"
+        assert result.title_hint == "Cleaning up the Mess"

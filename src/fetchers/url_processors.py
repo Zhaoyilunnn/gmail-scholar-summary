@@ -9,6 +9,7 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from html import unescape as html_unescape
 from typing import List, Optional
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -105,6 +106,7 @@ class GoogleScholarProcessor(URLProcessor):
         if not self._is_scholar_redirect(url):
             return ProcessedURL(url=url)
 
+        url = html_unescape(url)
         parsed = urlparse(url)
         query_params = parse_qs(parsed.query)
         if "url" not in query_params:
@@ -119,6 +121,7 @@ class GoogleScholarProcessor(URLProcessor):
 
     def _is_scholar_redirect(self, url: str) -> bool:
         """检查是否是 Google Scholar URL 包装链接."""
+        url = html_unescape(url)
         parsed = urlparse(url)
         return parsed.netloc.lower() == "scholar.google.com" and parsed.path in {
             "/scholar_url",
